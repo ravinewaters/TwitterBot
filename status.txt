@@ -1,0 +1,4 @@
+This is a sample status
+Each new line is a status
+Watch out for 140-chars limit
+Remember that you still need to append username which takes some chars

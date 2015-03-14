@@ -1,0 +1,6 @@
+[params]
+# list of keywords to track, separated by comma.
+track: NBA,
+    sports,
+    EPL,
+    game
