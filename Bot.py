@@ -6,6 +6,7 @@ __author__ = 'redhat'
 # You need TwitterAPI and its dependencies. Do `pip install twitterapi`.
 # TwitterBot version 0.2
 
+import argparse
 import signal
 import sys
 import os
@@ -185,15 +186,16 @@ class Producer(TwitterAPI):
         signal.signal(signal.SIGINT, self.exit_handler)
         print('Producer: started')
 
-        stream = self.request_endpoint(self.mode, self.params_file)
-        if stream:
-            try:
+        try:
+            stream = self.request_endpoint(self.mode, self.params_file)
+            if stream:
                 for tweet in stream:
                     if 'created_at' in tweet:
                         send_p.send(tweet)
-            except Exception:
-                # send SENTINEL when there is an error in streaming
-                send_p.send(self.SENTINEL)
+        except Exception as e:
+            # send SENTINEL when there is an error in streaming
+            send_p.send(self.SENTINEL)
+            print(e)
         print('Producer: ended')
 
     @staticmethod
@@ -209,9 +211,8 @@ class Producer(TwitterAPI):
             endpoint = 'statuses/filter'
             self.parse_params(params_file)
         else:
-            msg = 'Mode {} is not available!'.format('mode')
-            print(msg)
-            sys.exit(1)
+            message = 'Mode: {} is not available!'.format(mode)
+            raise Exception(message)
         return self.request(endpoint, self.params)
 
     def parse_params(self, params_file):
@@ -278,12 +279,16 @@ class TwitterBot():
         # SIGINT in parent process will hang the child processes if not
         # handled.
         try:
-            while True:
+            while p.is_alive() and c.is_alive():
                 sleep(1.0)
         except KeyboardInterrupt:
             pass
 
         print('Bot stops.')
 if __name__ == '__main__':
-    bot = TwitterBot()
+    parser = argparse.ArgumentParser(description = 'TwitterBot v0.2',
+                                     usage = "python -c your_config_file")
+    parser.add_argument('-c', dest = 'config_file', default = 'config.ini')
+    args = parser.parse_args()
+    bot = TwitterBot(config_file = args.config_file)
     bot.start()
